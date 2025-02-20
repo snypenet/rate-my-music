@@ -1,0 +1,6 @@
+flask
+requests
+bs4
+flask-cors
+openai
+python-dotenv
