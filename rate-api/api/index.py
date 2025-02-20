@@ -81,7 +81,7 @@ def get_lyrics():
     
     print('Looking up song in Genious', song_key)
 
-    artist_slug = re.sub(r'[^a-zA-Z0-9-]', '', artist.lower().replace(' ', '-'))
+    artist_slug = re.sub(r'[^a-zA-Z0-9-]', '', artist.lower().replace(' ', '-')).capitalize()
     song_slug = re.sub(r'[^a-zA-Z0-9-]', '', song.lower().replace(' ', '-'))
 
     print('Song lookup', artist_slug, song_slug)
