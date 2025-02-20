@@ -76,10 +76,15 @@ def get_lyrics():
     song_key = get_cache_key(artist, song)
 
     if song_key in lyrics_cache:
+        print('Found song in cache', song_key)
         return jsonify({"lyrics": lyrics_cache[song_key]})
+    
+    print('Looking up song in Genious', song_key)
 
     artist_slug = re.sub(r'[^a-zA-Z0-9-]', '', artist.lower().replace(' ', '-'))
     song_slug = re.sub(r'[^a-zA-Z0-9-]', '', song.lower().replace(' ', '-'))
+
+    print('Song lookup', artist_slug, song_slug)
 
     lyrics = scrape_lyrics(f"https://genius.com/{artist_slug}-{song_slug}-lyrics")
 
@@ -94,6 +99,7 @@ def scrape_lyrics(url):
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
+        print('Recieved failed status code from genius', response.status_code)
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -101,7 +107,10 @@ def scrape_lyrics(url):
                          attrs={'data-lyrics-container': 'true'})
 
     if not divs:
+        print('Could not fing lyrics div', soup)
         return None
+    
+    print('Found lyrics div', divs)
 
     return divs[0].text.strip()
 
