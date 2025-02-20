@@ -20,20 +20,22 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LYRICS_CACHE_FILE = "lyrics_cache.json"
 
 # Ensure cache file exists
-if not os.path.exists(LYRICS_CACHE_FILE):
-    with open(LYRICS_CACHE_FILE, "w") as f:
-        json.dump({}, f)
+# if not os.path.exists(LYRICS_CACHE_FILE):
+#     with open(LYRICS_CACHE_FILE, "w") as f:
+#         json.dump({}, f)
 
-def load_lyrics_cache():
-    with open(LYRICS_CACHE_FILE, "r") as f:
-        return json.load(f)
+# def load_lyrics_cache():
+#     with open(LYRICS_CACHE_FILE, "r") as f:
+#         return json.load(f)
 
-def save_lyrics_cache(cache):
-    with open(LYRICS_CACHE_FILE, "w") as f:
-        json.dump(cache, f, indent=4)
+# def save_lyrics_cache(cache):
+#     with open(LYRICS_CACHE_FILE, "w") as f:
+#         json.dump(cache, f, indent=4)
 
 def get_cache_key(artist, song):
     return f"{artist.lower()}-{song.lower()}"
+
+lyrics_cache = {}
 
 @app.route('/search', methods=['GET'])
 def search_song():
@@ -71,11 +73,10 @@ def get_lyrics():
     if not artist or not song:
         return jsonify({"error": "Missing artist or song"}), 400
 
-    cache = load_lyrics_cache()
     song_key = get_cache_key(artist, song)
 
-    if song_key in cache:
-        return jsonify({"lyrics": cache[song_key]})
+    if song_key in lyrics_cache:
+        return jsonify({"lyrics": lyrics_cache[song_key]})
 
     artist_slug = re.sub(r'[^a-zA-Z0-9-]', '', artist.lower().replace(' ', '-'))
     song_slug = re.sub(r'[^a-zA-Z0-9-]', '', song.lower().replace(' ', '-'))
@@ -83,8 +84,7 @@ def get_lyrics():
     lyrics = scrape_lyrics(f"https://genius.com/{artist_slug}-{song_slug}-lyrics")
 
     if lyrics:
-        cache[song_key] = lyrics
-        save_lyrics_cache(cache)
+        lyrics_cache[song_key] = lyrics
         return jsonify({"lyrics": lyrics})
     
     return jsonify({"error": "Lyrics not found"}), 404
@@ -114,12 +114,14 @@ def song_summary():
     if not artist or not song:
         return jsonify({"error": "Missing artist or song"}), 400
 
-    cache = load_lyrics_cache()
     song_key = get_cache_key(artist, song)
 
-    lyrics = cache.get(song_key)
+    
+    lyrics = lyrics_cache[song_key] if song_key in lyrics_cache else None
     if not lyrics:
         return jsonify({"error": "Lyrics not found in cache"}), 404
+    
+    lyrics = lyrics_cache[song_key]
 
     openai.api_key = OPENAI_API_KEY
     prompt = f'''
@@ -153,13 +155,13 @@ def song_rating():
     if not artist or not song:
         return jsonify({"error": "Missing artist or song"}), 400
 
-    cache = load_lyrics_cache()
     song_key = get_cache_key(artist, song)
-
-    lyrics = cache.get(song_key)
+    
+    lyrics = lyrics_cache[song_key] if song_key in lyrics_cache else None
     if not lyrics:
         return jsonify({"error": "Lyrics not found in cache"}), 404
-
+    
+    lyrics = lyrics_cache[song_key]
     openai.api_key = OPENAI_API_KEY
     prompt = f'''
         Rate the following Lyrics: using the ESRB style rating system.  Provide a concise rating with a few bullet points to support your reasoning.
