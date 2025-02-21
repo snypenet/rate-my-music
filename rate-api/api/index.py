@@ -100,6 +100,7 @@ def scrape_lyrics(url):
 
     if response.status_code != 200:
         print('Recieved failed status code from genius', response.status_code)
+        print('Response text', response.text)
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
